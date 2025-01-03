@@ -5,9 +5,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from src.shared.exception.base import BaseCustomException
+from src.domain.member.domain.model.member import Member
 
-from src.domain.sample.sample_controller import router as sample_router
+from src.shared.database.connection import Base, engine
+from src.domain.sample.presentation.sample_controller import router as sample_router
+from src.domain.member.presentation.member_controller import router as member_router
 
+
+Base.metadata.create_all(bind=engine)
 # cfg = load_config()
 
 
@@ -43,6 +48,7 @@ def init_exception_handlers(app: FastAPI) -> None:
 
 def init_routers(app: FastAPI) -> None:
     app.include_router(sample_router, prefix="/api/v1")
+    app.include_router(member_router, prefix="/api/v1")
 
 
 def init_middlewares(app: FastAPI) -> None:
