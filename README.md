@@ -1,25 +1,42 @@
 # 1. Set up
 
-### 1. Install poetry
+### 1. Set up MySQL server
+
+Install MySQL if not installed.
+
+```
+brew install mysql
+```
+
+Create database named `fyp`.
+
+```
+create database fyp;
+use fyp;
+```
+
+### 2. Install poetry
 
 ```
 brew install pipx
 pipx install poetry
 ```
 
-### 2. Activate virtualenv & Install dependencies
+### 3. Activate virtualenv & Install dependencies
 
 ```
 poetry shell
 poetry install
 ```
 
-### 3. Run the FastAPI server
+### 4. Run the FastAPI server
 
 ```
 python -m src
 ```
 
-### 4. View Docs
+It auto-creates DB tables.
+
+### 5. View Docs
 
 Type `localhost:8888/docs` in your browser.
