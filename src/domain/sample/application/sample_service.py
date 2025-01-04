@@ -1,4 +1,7 @@
-from src.domain.sample.application.dto.response.get_sample_response import GetSampleResponseDto
+from src.domain.sample.application.dto.response.get_sample_response import (
+    GetSampleResponseDto,
+)
+
 
 class SampleService:
     def __init__(self):

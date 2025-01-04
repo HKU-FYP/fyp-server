@@ -4,13 +4,12 @@ from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from src.shared.exception.base import BaseCustomException
+
 from src.domain.member.domain.model.member import Member
-
-from src.shared.database.connection import Base, engine
-from src.domain.sample.presentation.sample_controller import router as sample_router
 from src.domain.member.presentation.member_controller import router as member_router
-
+from src.domain.sample.presentation.sample_controller import router as sample_router
+from src.shared.database.connection import Base, engine
+from src.shared.exception.base import BaseCustomException
 
 Base.metadata.create_all(bind=engine)
 # cfg = load_config()
