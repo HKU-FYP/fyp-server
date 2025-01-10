@@ -5,11 +5,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.domain.member.domain.model.member import Member
+from src.domain.user.domain.model.user import User
 from src.domain.stock.domain.model.stock_info import StockInfo
-from src.domain.member.presentation.member_controller import router as member_router
+from src.domain.stock.domain.model.user_stock import UserStock
+from src.domain.user.presentation.user_controller import router as user_router
 from src.domain.sample.presentation.sample_controller import router as sample_router
 from src.domain.stock.presentation.stock_info_controller import router as stock_info_router
+from src.domain.stock.presentation.user_stock_controller import router as user_stock_router
 from src.shared.database.connection import Base, engine
 from src.shared.exception.base import BaseCustomException
 
@@ -49,8 +51,9 @@ def init_exception_handlers(app: FastAPI) -> None:
 
 def init_routers(app: FastAPI) -> None:
     app.include_router(sample_router, prefix="/api/v1")
-    app.include_router(member_router, prefix="/api/v1")
+    app.include_router(user_router, prefix="/api/v1")
     app.include_router(stock_info_router, prefix="/api/v1")
+    app.include_router(user_stock_router, prefix="/api/v1")
 
 
 def init_middlewares(app: FastAPI) -> None:
