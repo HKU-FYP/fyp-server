@@ -16,6 +16,8 @@ cryptography = "^44.0.0"
 bcrypt = "^4.2.1"
 pyjwt = "^2.10.1"
 requests = "^2.32.3"
+openai = "^1.59.3"
+pymilvus = {extras = ["model"], version = "^2.5.3"}
 
 
 [tool.poetry.group.dev.dependencies]
