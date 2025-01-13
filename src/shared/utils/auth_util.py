@@ -1,11 +1,11 @@
 import random
 import string
 from datetime import datetime, timedelta
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
 
 import bcrypt
 import jwt
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import (
     ExpiredSignatureError,
     InvalidSignatureError,
@@ -52,7 +52,8 @@ def decode_token(token: str) -> str:
         raise BaseCustomException(status_code=401, detail="Token signature is invalid.")
     except InvalidTokenError:
         raise BaseCustomException(status_code=401, detail="Token is invalid.")
-    
+
+
 def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     try:
         a = decode_token(token)
