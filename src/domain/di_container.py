@@ -15,7 +15,7 @@ stock_info_repository = StockInfoRepository()
 stock_info_service = StockInfoService(stock_info_repository)
 
 user_stock_repository = UserStockRepository()
-user_stock_service = UserStockService(user_stock_repository)
+user_stock_service = UserStockService(user_stock_repository, stock_info_repository)
 
 # User
 user_repository = UserRepository()
