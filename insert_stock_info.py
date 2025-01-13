@@ -1,7 +1,9 @@
-import pymysql
 import pandas as pd
-from src.shared.database.session import get_session
+import pymysql
+
 from src.domain.stock.domain.model.stock_info import StockInfo
+from src.shared.database.session import get_session
+
 
 def main():
     df = pd.read_csv("stock_info.csv")
@@ -12,6 +14,7 @@ def main():
             stock = StockInfo(ticker=row["Symbol"], name=row["Company Name"])
             session.add(stock)
             session.commit()
+
 
 if __name__ == "__main__":
     main()

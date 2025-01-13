@@ -1,16 +1,19 @@
+from sqlalchemy.orm import Session
+
+from src.domain.stock.domain.user_stock_repository import UserStockRepository
+from src.domain.user.application.dto.response.check_user_stock_exist_response import (
+    CheckUserStockExistResponseDto,
+)
 from src.domain.user.application.dto.response.login_response import LoginResponseDto
 from src.domain.user.application.dto.response.signup_response import SignUpResponseDto
-from src.domain.user.domain.user_repository import UserRepository
-from src.domain.stock.domain.user_stock_repository import UserStockRepository
 from src.domain.user.domain.model.user import User
+from src.domain.user.domain.user_repository import UserRepository
 from src.shared.exception.base import BaseCustomException
 from src.shared.utils.auth_util import (
     check_password,
     create_access_token,
     hash_password,
 )
-from sqlalchemy.orm import Session
-from src.domain.user.application.dto.response.check_user_stock_exist_response import CheckUserStockExistResponseDto
 
 
 class UserService:
@@ -45,8 +48,8 @@ class UserService:
         # Issue JWT token
         token = create_access_token(sub=user.id)
         return LoginResponseDto(access_token=token)
-    
+
     def is_user_stock_exist(self, session: Session, user_id: int):
         user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
-        exist =  len(user_stocks) > 0
+        exist = len(user_stocks) > 0
         return CheckUserStockExistResponseDto(exist=exist)

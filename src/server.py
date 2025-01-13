@@ -5,13 +5,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.domain.user.domain.model.user import User
+from src.domain.sample.presentation.sample_controller import router as sample_router
 from src.domain.stock.domain.model.stock_info import StockInfo
 from src.domain.stock.domain.model.user_stock import UserStock
+from src.domain.stock.presentation.stock_info_controller import (
+    router as stock_info_router,
+)
+from src.domain.stock.presentation.user_stock_controller import (
+    router as user_stock_router,
+)
+from src.domain.user.domain.model.user import User
 from src.domain.user.presentation.user_controller import router as user_router
-from src.domain.sample.presentation.sample_controller import router as sample_router
-from src.domain.stock.presentation.stock_info_controller import router as stock_info_router
-from src.domain.stock.presentation.user_stock_controller import router as user_stock_router
 from src.shared.database.connection import Base, engine
 from src.shared.exception.base import BaseCustomException
 
@@ -78,12 +82,11 @@ def init_middlewares(app: FastAPI) -> None:
     @app.middleware("http")
     async def cors_handlers(request: Request, call_next):
         response: Response = await call_next(request)
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, X-Requested-With'
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-Requested-With"
         return response
-
 
 
 def create_app() -> FastAPI:
