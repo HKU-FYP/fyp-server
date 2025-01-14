@@ -1,6 +1,10 @@
 import os
 from pymilvus import MilvusClient
 from pymilvus import model
+from pprint import pprint
+import json
+
+from src.domain.search.application.dto.get_embedding_search_response import EmbeddingSearchResponseDto
 
 # Milvus 세팅
 client = MilvusClient("milvus_demo.db")
@@ -29,14 +33,14 @@ sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(
         # "Autonomous vehicle technology"]
 
 keywords = ["News relevant to Nvidia stock movements", "News relevant to Apple stock movements"]
-stock_name = ["NVIDIA", "Apple"]
+stock_name = ["NVDA", "AAPL"]
 
 # Create embeddings
 vectors = sentence_transformer.encode_documents(keywords)
 
 # Prepare data for Milvus
 data = [
-    {"id": i, "vector": vectors[i], "keywords": keywords[i], "ticker": stock_name[i]} 
+    {"id": i, "vector": vectors[i], "keyword": keywords[i], "ticker": stock_name[i]} 
     for i in range(len(vectors))
 ]
 print("Data has", len(data), "entities, each with fields: ", data[0].keys())
@@ -44,7 +48,7 @@ print("Vector dim:", len(data[0]["vector"]))
 
 # Store vectors in Milvus
 res = client.insert(collection_name="demo_collection", data=data)
-print(res)
+# pprint(type(res))
 
 # News data for query
 
@@ -67,19 +71,64 @@ print(res)
 news_queries = ["NVIDIA Co. (NASDAQ:NVDA – Get Free Report)'s stock price traded down 1.2% on Thursday after an insider sold shares in the company. The stock traded as low as $131.80 and last traded at $135.34. 225,240,656 shares traded hands during trading, a decline of 43% from the average session volume of 395,069,875 shares. The stock had previously closed at $136.92.\nSpecifically, Director John Dabiri sold 716 shares of the company's stock in a transaction dated Monday, November 25th. The shares were sold at an average price of $142.00, for a total value of $101,672.00. Following the sale, the director now owns 19,942 shares of the company's stock, valued at approximately $2,831,764. This represents a 3.47 % decrease in their position. The transaction was disclosed in a document filed with the Securities & Exchange Commission, which is available through the SEC website.\nAnalysts Set New Price Targets\nSeveral analysts have weighed in on the stock. New Street Research raised shares of NVIDIA from a 'neutral' rating to a 'buy' rating and set a $120.00 price objective on the stock in a research note on Tuesday, August 6th. Loop Capital restated a 'buy' rating and set a $175.00 price target on shares of NVIDIA in a research report on Wednesday, November 20th. Evercore ISI raised their price target on NVIDIA from $189.00 to $190.00 and gave the company an 'outperform' rating in a report on Thursday, November 21st. Benchmark boosted their price objective on NVIDIA from $170.00 to $190.00 and gave the stock a 'buy' rating in a research note on Thursday, November 21st. Finally, Needham & Company LLC increased their target price on NVIDIA from $145.00 to $160.00 and gave the stock a 'buy' rating in a report on Thursday, November 21st. Four investment analysts have rated the stock with a hold rating, thirty-nine have given a buy rating and one has assigned a strong buy rating to the company. According to data from MarketBeat, NVIDIA presently has an average rating of 'Moderate Buy' and an average target price of $164.15.\nView Our Latest Stock Analysis on NVDA\nNVIDIA Stock Performance\nThe company has a debt-to-equity ratio of 0.13, a current ratio of 4.10 and a quick ratio of 3.64. The company has a market cap of $3.39 trillion, a price-to-earnings ratio of 54.41, a price-to-earnings-growth ratio of 2.45 and a beta of 1.66. The stock has a 50-day moving average price of $136.05 and a 200 day moving average price of $123.67.\nNVIDIA (NASDAQ:NVDA – Get Free Report) last announced its earnings results on Wednesday, November 20th. The computer hardware maker reported $0.81 EPS for the quarter, topping the consensus estimate of $0.69 by $0.12. The firm had revenue of $35.08 billion for the quarter, compared to the consensus estimate of $33.15 billion. NVIDIA had a net margin of 55.69% and a return on equity of 114.83%. The business's quarterly revenue was up 93.6% on a year-over-year basis. During the same period last year, the company posted $0.38 EPS. As a group, analysts anticipate that NVIDIA Co. will post 2.76 EPS for the current fiscal year.\nNVIDIA Dividend Announcement\nThe firm also recently declared a quarterly dividend, which will be paid on Friday, December 27th. Shareholders of record on Thursday, December 5th will be paid a $0.01 dividend. The ex-dividend date is Thursday, December 5th. This represents a $0.04 annualized dividend and a yield of 0.03%. NVIDIA's payout ratio is currently 1.57%.\nNVIDIA announced that its board has initiated a stock repurchase program on Wednesday, August 28th that authorizes the company to buyback $50.00 billion in outstanding shares. This buyback authorization authorizes the computer hardware maker to buy up to 1.6% of its stock through open market purchases. Stock buyback programs are typically a sign that the company's board believes its stock is undervalued.\nHedge Funds Weigh In On NVIDIA\nA number of institutional investors have recently added to or reduced their stakes in NVDA. American Trust lifted its stake in NVIDIA by 97.2% in the 3rd quarter. American Trust now owns 58,268 shares of the computer hardware maker's stock valued at $7,076,000 after purchasing an additional 28,719 shares during the last quarter. Asset Advisors Investment Management LLC raised its stake in NVIDIA by 0.4% in the third quarter. Asset Advisors Investment Management LLC now owns 81,453 shares of the computer hardware maker's stock valued at $9,892,000 after buying an additional 343 shares during the period. Tri Ri Asset Management Corp acquired a new stake in shares of NVIDIA in the third quarter valued at approximately $4,975,000. Peapack Gladstone Financial Corp boosted its stake in shares of NVIDIA by 6.8% during the 3rd quarter. Peapack Gladstone Financial Corp now owns 324,348 shares of the computer hardware maker's stock worth $39,388,000 after acquiring an additional 20,540 shares during the period. Finally, Synovus Financial Corp increased its holdings in shares of NVIDIA by 10.3% during the 3rd quarter. Synovus Financial Corp now owns 1,215,693 shares of the computer hardware maker's stock worth $147,635,000 after acquiring an additional 113,296 shares during the last quarter. 65.27% of the stock is currently owned by institutional investors and hedge funds.\nAbout NVIDIA\n\nNVIDIA Corporation provides graphics and compute and networking solutions in the United States, Taiwan, China, Hong Kong, and internationally. The Graphics segment offers GeForce GPUs for gaming and PCs, the GeForce NOW game streaming service and related infrastructure, and solutions for gaming platforms; Quadro/NVIDIA RTX GPUs for enterprise workstation graphics; virtual GPU or vGPU software for cloud-based visual and virtual computing; automotive platforms for infotainment systems; and Omniverse software for building and operating metaverse and 3D internet applications.\nFeatured Articles"]
     
 # convert news data to vectors
-query_vectors = sentence_transformer.encode_queries(news_queries)
+# query_vectors = sentence_transformer.encode_queries(news_queries)
 
 
 # Semantic search 
-res = client.search(
-    collection_name="demo_collection",  
-    data=query_vectors,  # query vectors
-    limit=5, #뉴스당 상위 5개의 관련 키워드 반환
-    output_fields=["id", "keywords", "ticker"],  # specifies fields to be returned
+# res = client.search(
+#     collection_name="demo_collection",  
+#     data=query_vectors,  # query vectors
+#     limit=2, #뉴스당 상위 5개의 관련 키워드 반환
+#     output_fields=["id", "keyword", "ticker"],  # specifies fields to be returned
+# )
+
+# print("-" * 50) 
+# print(f"Results for News Article: " + news_queries[0].split("\n")[0])  # Print the first line of news article
+# print("-" * 50) 
+
+# for out in res[0]:
+#     pprint(out)
+
+# tickers = [item['entity']['ticker'] for item in res[0] if item['distance'] > 0.5]
+# pprint(tickers)
+
+
+def embedding_search(
+    news_queries: list[str],
+    milvus_client,  # Milvus client instance
+    sentence_transformer,  # Pre-initialized sentence transformer instance
+    collection_name: str,
+    similarity_threshold: float = 0.5,
+    limit: int = 2
+) -> EmbeddingSearchResponseDto:
+        # Convert news queries to embedding vectors
+    query_vectors = sentence_transformer.encode_queries(news_queries)
+    
+    # Perform semantic search
+    search_results = client.search(
+        collection_name=collection_name,
+        data=query_vectors,
+        limit=limit,
+        output_fields=["id", "keyword", "ticker"]  # Specify fields to return
+    )
+    
+    for result in search_results[0]:
+        pprint(result)
+
+    # Extract tickers with similarity above threshold
+    tickers = []
+    for result in search_results:
+        tickers.extend([item['entity']['ticker'] for item in result if item['distance'] > similarity_threshold])
+    
+    return EmbeddingSearchResponseDto(tickers=tickers)
+
+# Usage
+tickers = embedding_search(
+    news_queries = news_queries,
+    milvus_client = client,
+    sentence_transformer=sentence_transformer,
+    collection_name="demo_collection"
 )
 
-print("-" * 50) 
-print(f"Results for News Article" + news_queries[0].split("\n")[0])  # Print the first line of news article
-print("-" * 50) 
-print(res)
-print("-" * 50) 
+print("Relevant stocks' tickers:", tickers)
+print(type(tickers))
