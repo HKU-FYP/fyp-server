@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 **/__pycache__/
 
+.milvus_demo.db.lock
+milvus_demo.db
+
 # C extensions
 *.so
 

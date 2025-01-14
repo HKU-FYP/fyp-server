@@ -2,6 +2,7 @@ import os
 from pymilvus import MilvusClient
 from pymilvus import model
 
+
 # Milvus 세팅
 client = MilvusClient("milvus_demo.db")
 
@@ -69,7 +70,6 @@ news_queries = ["NVIDIA Co. (NASDAQ:NVDA – Get Free Report)'s stock price trad
 # convert news data to vectors
 query_vectors = sentence_transformer.encode_queries(news_queries)
 
-
 # Semantic search 
 res = client.search(
     collection_name="demo_collection",  
@@ -82,4 +82,4 @@ print("-" * 50)
 print(f"Results for News Article" + news_queries[0].split("\n")[0])  # Print the first line of news article
 print("-" * 50) 
 print(res)
-print("-" * 50) 
+print("-" * 50)
