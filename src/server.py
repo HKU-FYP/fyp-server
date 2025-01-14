@@ -1,13 +1,16 @@
 from contextlib import asynccontextmanager
+from pymilvus import MilvusClient, DataType
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pprint import pprint
 
 from src.domain.sample.presentation.sample_controller import router as sample_router
 from src.domain.stock.domain.model.stock_info import StockInfo
 from src.domain.stock.domain.model.user_stock import UserStock
+from src.domain.news.domain.models.news import News
 from src.domain.stock.presentation.stock_info_controller import (
     router as stock_info_router,
 )
@@ -18,10 +21,16 @@ from src.domain.user.domain.model.user import User
 from src.domain.user.presentation.user_controller import router as user_router
 from src.shared.database.connection import Base, engine
 from src.shared.exception.base import BaseCustomException
-
+from src.domain.news.presentation.polling_schedule import start_polling
+from apscheduler.schedulers.background import BackgroundScheduler
 Base.metadata.create_all(bind=engine)
 # cfg = load_config()
 
+
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(start_polling, 'interval', seconds=3)
+    scheduler.start()
 
 def init_exception_handlers(app: FastAPI) -> None:
     """Initialize exception handlers."""
@@ -51,6 +60,13 @@ def init_exception_handlers(app: FastAPI) -> None:
             status_code=400,
             content={"detail": msg},
         )
+    
+    @app.on_event("startup")
+    async def startup_event():
+        start_scheduler()
+        print("Scheduler started.")
+    
+
 
 
 def init_routers(app: FastAPI) -> None:
@@ -87,6 +103,33 @@ def init_middlewares(app: FastAPI) -> None:
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-Requested-With"
         return response
+    
+
+def init_milvus():
+    milvus_client = MilvusClient("milvus_demo.db")
+    milvus_client.drop_collection(collection_name="dummy_demo1")
+
+    schema = milvus_client.create_schema(
+        auto_id=False,
+        enable_dynamic_field=True
+    )
+
+    schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(field_name='stock_info_id', datatype=DataType.INT64)
+    schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=384)
+    schema.add_field(field_name="ticker", datatype=DataType.VARCHAR, max_length=500)
+    schema.add_field(field_name="name", datatype=DataType.VARCHAR, max_length=500)
+    schema.add_field(field_name="keyword", datatype=DataType.VARCHAR, max_length=500)
+    schema.add_field(field_name="user_id", datatype=DataType.INT32, max_length=500)
+    schema.add_field(field_name="user_stock_id", datatype=DataType.INT32, max_length=500)
+
+    milvus_client.create_collection(
+        collection_name="dummy_demo1",
+        schema=schema
+    )
+    print("> Milvus Setup Complete!")
+
+    # pprint(milvus_client.describe_collection(collection_name="dummy_demo1"))
 
 
 def create_app() -> FastAPI:
@@ -108,6 +151,7 @@ def create_app() -> FastAPI:
 
     init_exception_handlers(app)
     init_routers(app)
+    init_milvus()
 
     return app
 

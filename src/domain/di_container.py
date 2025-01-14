@@ -7,6 +7,7 @@ from src.domain.stock.domain.stock_info_repository import StockInfoRepository
 from src.domain.stock.domain.user_stock_repository import UserStockRepository
 from src.domain.user.application.user_service import UserService
 from src.domain.user.domain.user_repository import UserRepository
+from pymilvus import MilvusClient
 
 cfg = load_config()
 
@@ -25,3 +26,10 @@ user_stock_service = UserStockService(user_stock_repository, stock_info_reposito
 # User
 user_repository = UserRepository()
 user_service = UserService(user_repository, user_stock_repository)
+
+
+# Milvus
+# milvus_client = MilvusClient(
+#     uri="http://localhost:19530",
+#     token="root:Milvus"
+# )
