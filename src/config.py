@@ -3,6 +3,14 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 from dotenv import load_dotenv
+from openai import OpenAI
+
+
+@dataclass
+class OpenAIConfig:
+    api_key: str
+    embedding_model: str
+    chat_model: str
 
 
 @dataclass
@@ -26,6 +34,7 @@ class StockAPIConfig:
 @dataclass
 class AppConfig:
     db: DBConfig
+    openai: OpenAIConfig
     jwt: JwtConfig
     stock: StockAPIConfig
 
@@ -48,6 +57,10 @@ def load_config() -> AppConfig:
         db_name=os.environ["MYSQL_DB_NAME"],
     )
 
+    openai_config = OpenAIConfig(
+        api_key=os.environ["OPENAI_API_KEY"], embedding_model="text-embedding-ada-002", chat_model="gpt-4o-mini"
+    )
+
     jwt_config = JwtConfig(secret_key=os.environ["JWT_SECRET_KEY"])
     stock_config = StockAPIConfig(api_key=os.environ["TWELVE_API_KEY"])
-    return AppConfig(db=db_config, jwt=jwt_config, stock=stock_config)
+    return AppConfig(db=db_config, openai=openai_config, jwt=jwt_config, stock=stock_config)

@@ -11,26 +11,30 @@ from src.domain.sample.presentation.sample_controller import router as sample_ro
 from src.domain.stock.domain.model.stock_info import StockInfo
 from src.domain.stock.domain.model.user_stock import UserStock
 from src.domain.news.domain.models.news import News
+from src.domain.news.domain.models.metric import Metric
 from src.domain.stock.presentation.stock_info_controller import (
     router as stock_info_router,
 )
 from src.domain.stock.presentation.user_stock_controller import (
     router as user_stock_router,
 )
+from src.domain.news.presentation.news_controller import router as news_router
 from src.domain.user.domain.model.user import User
 from src.domain.user.presentation.user_controller import router as user_router
 from src.shared.database.connection import Base, engine
 from src.shared.exception.base import BaseCustomException
 from src.domain.news.presentation.polling_schedule import start_polling
 from apscheduler.schedulers.background import BackgroundScheduler
+
 Base.metadata.create_all(bind=engine)
 # cfg = load_config()
 
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(start_polling, 'interval', seconds=3)
+    scheduler.add_job(start_polling, "interval", seconds=20)
     scheduler.start()
+
 
 def init_exception_handlers(app: FastAPI) -> None:
     """Initialize exception handlers."""
@@ -60,13 +64,11 @@ def init_exception_handlers(app: FastAPI) -> None:
             status_code=400,
             content={"detail": msg},
         )
-    
+
     @app.on_event("startup")
     async def startup_event():
-        start_scheduler()
+        # start_scheduler()
         print("Scheduler started.")
-    
-
 
 
 def init_routers(app: FastAPI) -> None:
@@ -74,6 +76,7 @@ def init_routers(app: FastAPI) -> None:
     app.include_router(user_router, prefix="/api/v1")
     app.include_router(stock_info_router, prefix="/api/v1")
     app.include_router(user_stock_router, prefix="/api/v1")
+    app.include_router(news_router, prefix="/api/v1")
 
 
 def init_middlewares(app: FastAPI) -> None:
@@ -103,32 +106,46 @@ def init_middlewares(app: FastAPI) -> None:
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-Requested-With"
         return response
-    
+
 
 def init_milvus():
     milvus_client = MilvusClient("milvus_demo.db")
-    milvus_client.drop_collection(collection_name="dummy_demo1")
 
-    schema = milvus_client.create_schema(
-        auto_id=False,
-        enable_dynamic_field=True
-    )
+    # if milvus_client.has_collection(collection_name="dummy_demo1"):
+    #     return
+
+    milvus_client.drop_collection(collection_name="dummy_demo1")
+    schema = milvus_client.create_schema(auto_id=False, enable_dynamic_field=True)
 
     schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
-    schema.add_field(field_name='stock_info_id', datatype=DataType.INT64)
+    schema.add_field(field_name="stock_info_id", datatype=DataType.INT64)
     schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=384)
     schema.add_field(field_name="ticker", datatype=DataType.VARCHAR, max_length=500)
     schema.add_field(field_name="name", datatype=DataType.VARCHAR, max_length=500)
     schema.add_field(field_name="keyword", datatype=DataType.VARCHAR, max_length=500)
-    schema.add_field(field_name="user_id", datatype=DataType.INT32, max_length=500)
-    schema.add_field(field_name="user_stock_id", datatype=DataType.INT32, max_length=500)
+    schema.add_field(field_name="user_id", datatype=DataType.INT32)
+    schema.add_field(field_name="user_stock_id", datatype=DataType.INT32)
 
-    milvus_client.create_collection(
-        collection_name="dummy_demo1",
-        schema=schema
+    milvus_client.create_collection(collection_name="dummy_demo1", schema=schema, metric_type="COSINE")
+
+    index_params = MilvusClient.prepare_index_params()
+
+    # 4.2. Add an index on the vector field.
+    index_params.add_index(
+        field_name="vector",
+        metric_type="COSINE",
+        index_type="IVF_FLAT",
+        index_name="vector_index",
+        params={"nlist": 128},
     )
-    print("> Milvus Setup Complete!")
 
+    milvus_client.create_index(
+        collection_name="dummy_demo1",
+        index_params=index_params,
+        sync=False,  # Whether to wait for index creation to complete before returning. Defaults to True.
+    )
+
+    print("> Milvus Setup Complete!")
     # pprint(milvus_client.describe_collection(collection_name="dummy_demo1"))
 
 

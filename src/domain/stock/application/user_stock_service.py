@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from src.domain.stock.application.dto.response.SaveUserStockResponseDto import SaveUserStockResponseDto
 from src.domain.stock.application.dto.response.get_user_stocks_response import (
     UserStockInfoDto,
 )
@@ -10,17 +11,15 @@ from src.shared.exception.base import BaseCustomException
 from pymilvus import MilvusClient, model
 
 milvus_client = MilvusClient("milvus_demo.db")
-sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(
-    model_name='all-MiniLM-L6-v2', 
-    device='cpu' 
-)
+sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2", device="cpu")
+
 
 class UserStockService:
     def __init__(self, user_stock_repository: UserStockRepository, stock_info_repository: StockInfoRepository):
         self.user_stock_repository = user_stock_repository
         self.stock_info_repository = stock_info_repository
 
-    def save_user_stock(self, session: Session, user_id: int, stock_info_id: int):
+    def save_user_stock(self, session: Session, user_id: int, stock_info_id: int) -> SaveUserStockResponseDto:
         # Check whether the user already input a stock with the same stock_info_id
         user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
         if user_stocks:
@@ -33,33 +32,25 @@ class UserStockService:
         # list[str] for vector
         stock_info = self.stock_info_repository.find_by_id(session, user_stock.stock_info_id)
         keyword = f"News relevant to {stock_info.name} stock price movements"
-        vectors = sentence_transformer.encode_documents([keyword]) # convert to embedding
-        
+        vectors = sentence_transformer.encode_documents([keyword])  # convert to embedding
+
         data = [
             {
-                'vector': vectors[0],
-                'stock_info_id': stock_info.id,
-                'ticker': stock_info.ticker,
-                'name': stock_info.name,
-                'keyword': keyword,
-                'user_id': user_id,
-                'user_stock_id': user_stock.id
+                "vector": vectors[0],
+                "stock_info_id": stock_info.id,
+                "ticker": stock_info.ticker,
+                "name": stock_info.name,
+                "keyword": keyword,
+                "user_id": user_id,
+                "user_stock_id": user_stock.id,
             }
         ]
 
-        res = milvus_client.insert(
-            collection_name="dummy_demo1",
-            data=data
-        )
-        print("Insert to Milvus successful!", res)
+        res = milvus_client.insert(collection_name="dummy_demo1", data=data)
 
-        res = milvus_client.query(
-            collection_name="dummy_demo1",
-            limit=5
-        )
+        res = milvus_client.query(collection_name="dummy_demo1", limit=5)
 
-        print(res)
-
+        return SaveUserStockResponseDto(user_stock_id=user_stock.id)
 
     def get_user_stocks_by_user_id(self, session: Session, user_id: int) -> list[UserStockInfoDto]:
         user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
