@@ -4,11 +4,21 @@ import json
 from pprint import pprint
 from pymilvus import MilvusClient, model
 
+from src.domain.news.application.sentiment_analyzer import NewsArticleDto, \
+    SentimentAnalysisResultDto
+from src.domain.news.application.stock_impact_analyzer import \
+    StockImpactAnalysisResultDto
+from src.domain.news.domain.models.metric import Metric
+from src.domain.news.domain.models.news import News
+from src.domain.di_container import news_repository, sentiment_analyzer, \
+    user_stock_repository, stock_info_repository, financial_metric_analyzer, \
+    metric_repository, stock_impact_analyzer
+from datetime import datetime
+from src.shared.database.session import get_session
+from src.domain.di_container import summary_generator_llm
+
 client = MilvusClient("milvus_demo.db")
-sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(
-    model_name='all-MiniLM-L6-v2', 
-    device='cpu' 
-)
+sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2", device="cpu")
 
 idx = 0
 total_len = 8
@@ -16,32 +26,119 @@ total_len = 8
 with open("news_data.json") as f:
     news_data_list = json.load(f)
 
-def start_polling():
-    global idx
 
-    # News를 .json에 저장되어있음 (OK)
+def start_polling(threshold=0.5):
+    global idx
+    session = next(get_session())
 
     # News를 JSON 파일에서 polling한다 (1개씩) -> DTO로 변환
     news_data = news_data_list[idx]
+    print(f"[idx: {idx}] {news_data['title']}")
 
     news_query_str = [
-        news_data['summary']
+        news_data["summary"]
+        # news_data['title']
     ]
 
     query_vectors = sentence_transformer.encode_queries(news_query_str)
 
     # Embedding Search 수행 (news contents <-> user input stock name)
-    res = client.search(
-        collection_name="dummy_demo1", 
+    results = client.search(
+        collection_name="dummy_demo1",
+        anns_field="vector",
         data=query_vectors,
         limit=10,
-        output_fields=['id', '']
+        output_fields=["id", "stock_info_id", "ticker", "name", "keyword", "user_stock_id"],
+        search_params={
+            "metric_type": "COSINE",  # Match the index metric type
+            "params": {"nprobe": 10},  # Number of clusters to search
+        },
     )
+    results = results[0]
+    print(results)
 
-    # Output(stock_info_id 리스트)
+    # 만약 threshold 넘는 result가 1개라도 있으면 Summary Generation 해야됨.
+    is_matched_result = any([result["distance"] >= threshold for result in results])
+    summary = None
+    key_metrics: list[str] = []
 
-    # user_stock entity에 요걸로 필터링 한다 -> user_stocks
+    if is_matched_result:
+        # 1. Summary 생성
+        # summary = summary_generator_llm.generate_summary(content=news_data['summary'])
+        summary = "This is sample summary to not waste tokens"
 
-    # 그러면 해당 user_stocks에다가 news FK 매핑해줌
-    
+        # 2. Key metrics
+        key_metrics = financial_metric_analyzer.analyze_metrics(
+            news_data['summary']).metrics
+        print("Key Metrics: ", key_metrics)
+
+    sentiment_analysis_cache: dict[str, SentimentAnalysisResultDto] = {}
+    stock_impact_analysis_cache: dict[str, StockImpactAnalysisResultDto] = {}
+
+    for result in results:
+        distance = result["distance"]
+        print("Distance:", distance)
+        print()
+        if distance < threshold:
+            continue
+
+        entity = result["entity"]
+        datetime_obj = datetime.strptime(news_data["published_date"], "%Y-%m-%d %H:%M:%S")
+
+        # 3. Sentiment Analysis -> stock이 유저마다 다를 수 있음.
+        user_stock_id = entity['user_stock_id']
+        user_stock = user_stock_repository.find_by_user_stock_id(session, user_stock_id)
+        stock_info = stock_info_repository.find_by_id(session, user_stock.stock_info_id)
+        stock_name: str = stock_info.name
+
+        sentiment_analysis_result = None
+
+        if stock_name in sentiment_analysis_cache:
+            sentiment_analysis_result = sentiment_analysis_cache[stock_name]
+        else:
+            sentiment_analysis_result = SentimentAnalysisResultDto(
+                sentiment="Positive",
+                analysis="Dummy Analysis Placeholder to save tokens"
+            )
+            # sentiment_analysis_result = sentiment_analyzer.analyze_sentiment(
+            #     NewsArticleDto(news_data['title'], news_data['summary']),
+            #     stock_name
+            # )
+
+        stock_impact_analysis_result = None
+
+        if stock_name in stock_impact_analysis_cache:
+            stock_impact_analysis_result = stock_impact_analysis_cache[stock_name]
+        else:
+            stock_impact_analysis_result: StockImpactAnalysisResultDto = stock_impact_analyzer.analyze_stock_impact(stock_name, news_data['summary'])
+            stock_impact_analysis_result = StockImpactAnalysisResultDto(easy="dummy easy", intermediate="dummy intermediate", expert="dummy expert")
+
+
+        print(sentiment_analysis_result)
+        print("-" * 50)
+        print("[Stock Impact Analysis]")
+        print(stock_impact_analysis_result)
+        print("-" * 50)
+
+        news = News(
+            user_stock_id=entity["user_stock_id"],
+            title=news_data["title"],
+            author=news_data["author"],
+            published_date=datetime_obj,
+            link=news_data["link"],
+            publisher=news_data["clean_url"],
+            content=news_data["summary"],
+            summary=summary,
+            sentiment=sentiment_analysis_result.sentiment,
+            sentiment_analysis=sentiment_analysis_result.analysis,
+            stock_impact_analysis_easy=stock_impact_analysis_result.easy,
+            stock_impact_analysis_intermediate=stock_impact_analysis_result.intermediate,
+            stock_impact_analysis_expert=stock_impact_analysis_result.expert,
+        )
+
+        news_repository.save(session, news)
+
+        for metric in key_metrics:
+            metric_repository.save(session, Metric(metric_content=metric, news_id=news.id))
+
     idx = (idx + 1) % total_len
