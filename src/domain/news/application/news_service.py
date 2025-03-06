@@ -25,6 +25,7 @@ class NewsService:
                 link=news.link,
                 publisher=news.publisher,
                 content=news.content,
+                sentiment=news.sentiment
             )
             for news in news_list
         ]
