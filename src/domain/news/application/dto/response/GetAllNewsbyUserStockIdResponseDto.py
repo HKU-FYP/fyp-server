@@ -10,3 +10,4 @@ class GetAllNewsByUserStockIdResponseDto(BaseModel):
     link: str = Field(...)
     publisher: str = Field(...)
     content: str = Field(...)
+    sentiment: str = Field(...)
