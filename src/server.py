@@ -67,7 +67,7 @@ def init_exception_handlers(app: FastAPI) -> None:
 
     @app.on_event("startup")
     async def startup_event():
-        # start_scheduler()
+        start_scheduler()
         print("Scheduler started.")
 
 
