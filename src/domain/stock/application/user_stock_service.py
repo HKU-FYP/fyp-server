@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 
 from src.domain.stock.application.dto.response.SaveUserStockResponseDto import SaveUserStockResponseDto
+from src.domain.stock.application.dto.response.get_user_stock_ids import \
+    GetUserStockIdResponse
 from src.domain.stock.application.dto.response.get_user_stocks_response import (
     UserStockInfoDto,
 )
@@ -60,3 +62,12 @@ class UserStockService:
             res.append(UserStockInfoDto(id=user_stock.stock_info_id, ticker=stock_info.ticker, name=stock_info.name))
 
         return res
+
+    def get_user_stock_ids(self, session: Session, user_id: int):
+        user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
+        user_stock_ids = [user_stock.id for user_stock in user_stocks]
+        if user_stock_ids:
+            return GetUserStockIdResponse(userStockId=user_stock_ids[0])
+        else:
+            return GetUserStockIdResponse(userStockId=None)
+
