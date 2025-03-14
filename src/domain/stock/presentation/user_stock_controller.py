@@ -5,6 +5,8 @@ from src.domain.di_container import user_stock_service
 from src.domain.stock.application.dto.request.save_user_stock_request import (
     SaveUserStockRequestDto,
 )
+from src.domain.stock.application.dto.response.get_user_stock_ids import \
+    GetUserStockIdResponse
 from src.shared.database.session import get_session
 from src.shared.utils.auth_util import get_current_user_id
 
@@ -16,3 +18,7 @@ def save_user_stock(
     request: SaveUserStockRequestDto, session=Depends(get_session), user_id: int = Depends(get_current_user_id)
 ):
     return user_stock_service.save_user_stock(session, user_id, request.stock_info_id)
+
+@router.get("/users/user-stock-ids", status_code=status.HTTP_200_OK, response_model=GetUserStockIdResponse)
+def get_user_stock_ids(session=Depends(get_session), user_id: int = Depends(get_current_user_id)):
+    return user_stock_service.get_user_stock_ids(session, user_id)
