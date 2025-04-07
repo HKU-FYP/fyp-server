@@ -70,11 +70,12 @@ class UserStockService:
         res = []
         for user_stock in user_stocks:
             stock_info = self.stock_info_repository.find_by_id(session, user_stock.stock_info_id)
-            res.append(UserStockInfoDto(id=user_stock.stock_info_id, ticker=stock_info.ticker, name=stock_info.name))
+            res.append(UserStockInfoDto(id=user_stock.stock_info_id, user_stock_id=user_stock.id, ticker=stock_info.ticker, name=stock_info.name))
 
         return res
 
-    def get_user_stock_ids(self, session: Session, user_id: int):
+    # TODO 지우기
+    def get_user_stock_ids(self, session: Session, user_id: int): 
         user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
         user_stock_ids = [user_stock.id for user_stock in user_stocks]
         if user_stock_ids:
