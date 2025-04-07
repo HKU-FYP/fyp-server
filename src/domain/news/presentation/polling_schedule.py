@@ -8,6 +8,8 @@ from src.domain.news.application.sentiment_analyzer import NewsArticleDto, \
     SentimentAnalysisResultDto
 from src.domain.news.application.stock_impact_analyzer import \
     StockImpactAnalysisResultDto
+from src.domain.news.application.summary_generator import \
+    SummaryGenerationResponseDto
 from src.domain.news.domain.models.metric import Metric
 from src.domain.news.domain.models.news import News
 from src.domain.di_container import news_repository, sentiment_analyzer, \
@@ -27,7 +29,8 @@ with open("news_data.json") as f:
     news_data_list = json.load(f)
 
 
-def start_polling(threshold=0.5):
+def start_polling(threshold=0.4):
+    threshold = 0.4
     global idx
     session = next(get_session())
 
@@ -47,7 +50,7 @@ def start_polling(threshold=0.5):
         collection_name="dummy_demo1",
         anns_field="vector",
         data=query_vectors,
-        limit=10,
+        limit=500,
         output_fields=["id", "stock_info_id", "ticker", "name", "keyword", "user_stock_id"],
         search_params={
             "metric_type": "COSINE",  # Match the index metric type
@@ -55,21 +58,36 @@ def start_polling(threshold=0.5):
         },
     )
     results = results[0]
-    print(results)
+    # print(results)
 
     # 만약 threshold 넘는 result가 1개라도 있으면 Summary Generation 해야됨.
     is_matched_result = any([result["distance"] >= threshold for result in results])
-    summary = None
+    summary_dto = None
     key_metrics: list[str] = []
+
+    results = [result for result in results if result['distance'] >= threshold]
+    unique_results = {}
+    for result in results:
+        user_stock_id = result.get("user_stock_id")
+        if (user_stock_id not in unique_results or
+            result["distance"] > unique_results[user_stock_id]["distance"]):
+            unique_results[user_stock_id] = result
+
+    results = list(unique_results.values())
+    print(results)
 
     if is_matched_result:
         # 1. Summary 생성
-        # summary = summary_generator_llm.generate_summary(content=news_data['summary'])
-        summary = "This is sample summary to not waste tokens"
+        # TODO: DUMMY FIX
+        # summary_dto = summary_generator_llm.generate_summary(content=news_data['summary'])
+        summary = "This is dummy summary to not waste tokens"
+        summary_dto = SummaryGenerationResponseDto("summary", "one-sentence-summary")
 
         # 2. Key metrics
-        key_metrics = financial_metric_analyzer.analyze_metrics(
-            news_data['summary']).metrics
+        key_metrics = ["abc", "edf", "zyx"]
+        # TODO: DUMMY FIX
+        # key_metrics = financial_metric_analyzer.analyze_metrics(
+        #     news_data['summary']).metrics
         print("Key Metrics: ", key_metrics)
 
     sentiment_analysis_cache: dict[str, SentimentAnalysisResultDto] = {}
@@ -96,6 +114,7 @@ def start_polling(threshold=0.5):
         if stock_name in sentiment_analysis_cache:
             sentiment_analysis_result = sentiment_analysis_cache[stock_name]
         else:
+            # TODO: DUMMY FIX
             sentiment_analysis_result = SentimentAnalysisResultDto(
                 sentiment="Positive",
                 analysis="Dummy Analysis Placeholder to save tokens"
@@ -110,7 +129,8 @@ def start_polling(threshold=0.5):
         if stock_name in stock_impact_analysis_cache:
             stock_impact_analysis_result = stock_impact_analysis_cache[stock_name]
         else:
-            stock_impact_analysis_result: StockImpactAnalysisResultDto = stock_impact_analyzer.analyze_stock_impact(stock_name, news_data['summary'])
+            # TODO: DUMMY FIX
+            # stock_impact_analysis_result: StockImpactAnalysisResultDto = stock_impact_analyzer.analyze_stock_impact(stock_name, news_data['summary'])
             stock_impact_analysis_result = StockImpactAnalysisResultDto(easy="dummy easy", intermediate="dummy intermediate", expert="dummy expert")
 
 
@@ -128,7 +148,8 @@ def start_polling(threshold=0.5):
             link=news_data["link"],
             publisher=news_data["clean_url"],
             content=news_data["summary"],
-            summary=summary,
+            summary=summary_dto.summary,
+            one_sentence_summary=summary_dto.one_sentence_summary,
             sentiment=sentiment_analysis_result.sentiment,
             sentiment_analysis=sentiment_analysis_result.analysis,
             stock_impact_analysis_easy=stock_impact_analysis_result.easy,

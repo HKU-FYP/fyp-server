@@ -46,6 +46,7 @@ class NewsService:
             publisher=news.publisher,
             content=news.content,
             summary=news.summary,
+            one_sentence_summary=news.one_sentence_summary,
             sentiment=news.sentiment,
             sentiment_analysis=news.sentiment_analysis,
             stock_impact_analysis_easy=news.stock_impact_analysis_easy,
