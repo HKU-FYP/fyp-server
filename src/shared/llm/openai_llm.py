@@ -12,7 +12,7 @@ class ChatMessage:
 
 
 class OpenAIChatLLM:
-    def __init__(self, api_key: str, model: str = "gpt-4o-mini", temperature: float = 0.3):
+    def __init__(self, api_key: str, model: str = "gpt-4o-mini", temperature: float = 0.0):
         self.async_client = AsyncOpenAI(api_key=api_key)
         self.sync_client = OpenAI(api_key=api_key)
 

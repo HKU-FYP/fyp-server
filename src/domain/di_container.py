@@ -1,6 +1,8 @@
 from src.config import load_config
 from src.domain.news.application.FinancialMetricsAnalyzer import \
     FinancialMetricAnalyzer
+from src.domain.news.application.keyword_generator import \
+    ExampleKeywordsGenerator
 from src.domain.news.application.sentiment_analyzer import SentimentAnalyzer
 from src.domain.news.application.stock_impact_analyzer import \
     StockImpactAnalyzer
@@ -31,7 +33,6 @@ stock_info_repository = StockInfoRepository()
 stock_info_service = StockInfoService(stock_info_repository, stock_info_fetcher)
 
 user_stock_repository = UserStockRepository()
-user_stock_service = UserStockService(user_stock_repository, stock_info_repository)
 
 # User
 user_repository = UserRepository()
@@ -40,6 +41,7 @@ user_service = UserService(user_repository, user_stock_repository)
 # News
 metric_repository = MetricRepository()
 llm = OpenAIChatLLM(api_key=cfg.openai.api_key)
+keyword_generator = ExampleKeywordsGenerator(llm=llm)
 summary_generator_llm = SummaryGeneratorLLM(llm=llm)
 news_repository = NewsRepository()
 news_service = NewsService(news_repository, metric_repository)
@@ -51,3 +53,5 @@ stock_impact_analyzer = StockImpactAnalyzer(llm=llm)
 #     uri="http://localhost:19530",
 #     token="root:Milvus"
 # )
+
+user_stock_service = UserStockService(user_stock_repository, stock_info_repository, keyword_generator)

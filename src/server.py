@@ -32,7 +32,7 @@ Base.metadata.create_all(bind=engine)
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(start_polling, "interval", seconds=20)
+    scheduler.add_job(start_polling, "interval", seconds=15)
     scheduler.start()
 
 

@@ -282,5 +282,5 @@ print(len(data))
 
 import json
 
-with open("news_data.json", "w", encoding="utf-8") as file:
+with open("news_data3.json", "w", encoding="utf-8") as file:
     json.dump(data, file, indent=4, ensure_ascii=False)
