@@ -12,6 +12,7 @@ class GetNewsByIdResponseDto(BaseModel):
     content: str = Field(...)
 
     summary: str = Field(...)
+    one_sentence_summary: str = Field(...)
     sentiment: str = Field(...)
     sentiment_analysis: str = Field(...)
     stock_impact_analysis_easy: str = Field(...)

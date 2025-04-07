@@ -1,5 +1,9 @@
+from pprint import pprint
+
 from sqlalchemy.orm import Session
 
+from src.domain.news.application.keyword_generator import \
+    ExampleKeywordsGenerator
 from src.domain.stock.application.dto.response.SaveUserStockResponseDto import SaveUserStockResponseDto
 from src.domain.stock.application.dto.response.get_user_stock_ids import \
     GetUserStockIdResponse
@@ -17,9 +21,10 @@ sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(model_na
 
 
 class UserStockService:
-    def __init__(self, user_stock_repository: UserStockRepository, stock_info_repository: StockInfoRepository):
+    def __init__(self, user_stock_repository: UserStockRepository, stock_info_repository: StockInfoRepository, keyword_generator: ExampleKeywordsGenerator):
         self.user_stock_repository = user_stock_repository
         self.stock_info_repository = stock_info_repository
+        self.keyword_generator = keyword_generator
 
     def save_user_stock(self, session: Session, user_id: int, stock_info_id: int) -> SaveUserStockResponseDto:
         # Check whether the user already input a stock with the same stock_info_id
@@ -33,24 +38,30 @@ class UserStockService:
         # Add to milvus
         # list[str] for vector
         stock_info = self.stock_info_repository.find_by_id(session, user_stock.stock_info_id)
-        keyword = f"News relevant to {stock_info.name} stock price movements"
-        vectors = sentence_transformer.encode_documents([keyword])  # convert to embedding
+        example_keywords = self.keyword_generator.generate_keywords(stock_info.name).keywords
+        # keyword = f"News relevant to {stock_info.name} stock price movements"
+        print(f"Stock Name: {stock_info.name}")
+        print("Example Keywords:", example_keywords)
+        example_keywords.append(stock_info.name)
 
-        data = [
-            {
-                "vector": vectors[0],
-                "stock_info_id": stock_info.id,
-                "ticker": stock_info.ticker,
-                "name": stock_info.name,
-                "keyword": keyword,
-                "user_id": user_id,
-                "user_stock_id": user_stock.id,
-            }
-        ]
+        for example_keyword in example_keywords:
+            vectors = sentence_transformer.encode_documents([example_keyword])  # convert to embedding
 
-        res = milvus_client.insert(collection_name="dummy_demo1", data=data)
+            data = [
+                {
+                    "vector": vectors[0],
+                    "stock_info_id": stock_info.id,
+                    "ticker": stock_info.ticker,
+                    "name": stock_info.name,
+                    "keyword": example_keyword,
+                    "user_id": user_id,
+                    "user_stock_id": user_stock.id,
+                }
+            ]
 
-        res = milvus_client.query(collection_name="dummy_demo1", limit=5)
+            milvus_client.insert(collection_name="dummy_demo1", data=data)
+
+        # res = milvus_client.query(collection_name="dummy_demo1", limit=5)
 
         return SaveUserStockResponseDto(user_stock_id=user_stock.id)
 

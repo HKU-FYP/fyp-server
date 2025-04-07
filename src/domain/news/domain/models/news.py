@@ -21,6 +21,7 @@ class News(Base):
 
     # System Generated
     summary: Mapped[str] = mapped_column(Text, nullable=True)
+    one_sentence_summary: Mapped[str] = mapped_column(Text, nullable=True)
     sentiment: Mapped[str] = mapped_column(Text, nullable=True)
     sentiment_analysis: Mapped[str] = mapped_column(Text, nullable=True)
     stock_impact_analysis_easy: Mapped[str] = mapped_column(Text, nullable=True)
