@@ -25,3 +25,7 @@ def get_dashboard_summary(
     user_stock_id: int, session=Depends(get_session)
 ):
     return news_service.get_dashboard_summary(session, user_stock_id)
+
+@router.post("/news/{news_id}/dislike", status_code=status.HTTP_204_NO_CONTENT)
+def dislike(news_id: int, session=Depends(get_session)):
+    news_service.dislike(session, news_id)

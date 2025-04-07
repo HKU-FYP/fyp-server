@@ -8,12 +8,25 @@ from src.domain.news.application.dto.response.GetAllNewsbyUserStockIdResponseDto
     GetAllNewsByUserStockIdResponseDto,
 )
 from sqlalchemy.orm import Session
+from pymilvus import MilvusClient, model
 
+milvus_client = MilvusClient("milvus_demo.db")
 
 class NewsService:
     def __init__(self, news_repository: NewsRepository, metric_repository: MetricRepository):
         self.news_repository = news_repository
         self.metric_repository = metric_repository
+
+    def dislike(self, session: Session, news_id: int):
+        news = self.news_repository.find_by_id(session, news_id)
+
+        # 해당 user_stock_id를 가지고 해당 matched keyword를 가진 모든 milvuz entry를 삭제한다.
+        res = milvus_client.delete(
+            collection_name="dummy_demo1",
+            filter=f"keyword == '{news.matched_keyword}' and user_stock_id == {news.user_stock_id}"
+        )
+        print("Delete result:", res)
+
 
     def get_dashboard_summary(self, session: Session, user_stock_id: int) -> GetDashboardSummaryResponseDto:
         # Get all news by user_stock_id

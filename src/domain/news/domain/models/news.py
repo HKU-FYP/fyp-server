@@ -12,6 +12,8 @@ class News(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False, autoincrement=True)
     user_stock_id: Mapped[int] = mapped_column(Integer, ForeignKey("user_stock.id"), nullable=False)
 
+    matched_keyword: Mapped[str] = mapped_column(String(500), nullable=False)
+
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     author: Mapped[str] = mapped_column(String(500), nullable=True)
 

@@ -101,6 +101,7 @@ def start_polling(threshold=0.4):
             continue
 
         entity = result["entity"]
+        print("Matched Keyword: ", entity["keyword"])
         datetime_obj = datetime.strptime(news_data["published_date"], "%Y-%m-%d %H:%M:%S")
 
         # 3. Sentiment Analysis -> stock이 유저마다 다를 수 있음.
@@ -143,6 +144,7 @@ def start_polling(threshold=0.4):
 
         news = News(
             user_stock_id=entity["user_stock_id"],
+            matched_keyword=entity['keyword'],
             title=news_data["title"],
             author=news_data["author"],
             published_date=datetime_obj,
