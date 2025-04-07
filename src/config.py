@@ -30,6 +30,11 @@ class JwtConfig:
 class StockAPIConfig:
     api_key: str
 
+@dataclass
+class DiscordConfig:
+    channel_id: str
+    bot_token: str
+
 
 @dataclass
 class AppConfig:
@@ -37,6 +42,7 @@ class AppConfig:
     openai: OpenAIConfig
     jwt: JwtConfig
     stock: StockAPIConfig
+    discord: DiscordConfig
 
 
 @lru_cache
@@ -61,6 +67,8 @@ def load_config() -> AppConfig:
         api_key=os.environ["OPENAI_API_KEY"], embedding_model="text-embedding-ada-002", chat_model="gpt-4o-mini"
     )
 
+    discord_config = DiscordConfig(os.environ["DISCORD_CHANNEL_ID"], os.environ["DISCORD_BOT_TOKEN"])
+
     jwt_config = JwtConfig(secret_key=os.environ["JWT_SECRET_KEY"])
     stock_config = StockAPIConfig(api_key=os.environ["TWELVE_API_KEY"])
-    return AppConfig(db=db_config, openai=openai_config, jwt=jwt_config, stock=stock_config)
+    return AppConfig(db=db_config, openai=openai_config, jwt=jwt_config, stock=stock_config, discord=discord_config)

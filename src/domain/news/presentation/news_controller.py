@@ -19,3 +19,9 @@ def get_all_news_by_user_stock_id(
 @router.get("/news/{news_id}", status_code=status.HTTP_200_OK)
 def get_news_info_by_id(news_id: int, session=Depends(get_session)):
     return news_service.get_news_by_id(session, news_id)
+
+@router.get("/user_stocks/{user_stock_id}/news-dashboard-summary", status_code=status.HTTP_200_OK)
+def get_dashboard_summary(
+    user_stock_id: int, session=Depends(get_session)
+):
+    return news_service.get_dashboard_summary(session, user_stock_id)

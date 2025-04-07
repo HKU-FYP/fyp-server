@@ -12,6 +12,7 @@ class NewsArticleDto:
 @dataclass
 class SentimentAnalysisResultDto:
     sentiment: Literal['Positive', 'Negative', 'Neutral']
+    sentiment_score: float
     analysis: str
 
 class SentimentAnalyzer:
@@ -25,4 +26,4 @@ class SentimentAnalyzer:
         })
 
         resp = self.llm.predict_json(messages)
-        return SentimentAnalysisResultDto(sentiment=resp['sentiment'], analysis=resp['analysis'])
+        return SentimentAnalysisResultDto(sentiment=resp['sentiment'], sentiment_score=resp['sentiment_score'], analysis=resp['analysis'])

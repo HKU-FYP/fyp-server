@@ -1,3 +1,5 @@
+from src.domain.news.application.dto.response.GetDashboardNewsSummaryResponseDto import \
+    GetDashboardSummaryResponseDto
 from src.domain.news.application.dto.response.GetNewsByIdResponseDto import \
     GetNewsByIdResponseDto
 from src.domain.news.domain.metric_repository import MetricRepository
@@ -12,6 +14,25 @@ class NewsService:
     def __init__(self, news_repository: NewsRepository, metric_repository: MetricRepository):
         self.news_repository = news_repository
         self.metric_repository = metric_repository
+
+    def get_dashboard_summary(self, session: Session, user_stock_id: int) -> GetDashboardSummaryResponseDto:
+        # Get all news by user_stock_id
+        news_list = self.news_repository.find_all_by_user_stock_id(session, user_stock_id)
+
+        positive_news_list = [news for news in news_list if news.sentiment == 'Positive' or news.sentiment == 'Strong_Positive']
+        positive_news_list.sort(key=lambda x: x.sentiment_score, reverse=True)
+        positive_news_list = positive_news_list[:3]
+        positive_summary_list = [news.one_sentence_summary for news in positive_news_list]
+
+        negative_news_list = [news for news in news_list if news.sentiment == 'Negative' or news.sentiment == 'Strong_Negative']
+        negative_news_list.sort(key=lambda x: x.sentiment_score)
+        negative_news_list = negative_news_list[:3]
+        negative_summary_list = [news.one_sentence_summary for news in negative_news_list]
+
+        return GetDashboardSummaryResponseDto(
+           positive_summary_list=positive_summary_list,
+            negative_summary_list=negative_summary_list,
+        )
 
     def get_all_news_by_user_stock_id(self, session: Session, user_stock_id: int) -> GetAllNewsByUserStockIdResponseDto:
         news_list = self.news_repository.find_all_by_user_stock_id(session, user_stock_id)
