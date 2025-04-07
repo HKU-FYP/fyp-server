@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from src.shared.llm.openai_llm import OpenAIChatLLM
 from src.shared.llm.utils import load_prompt_messages, fill_message_placeholders
 
-
 @dataclass
 class NewsArticleDto:
     title: str
