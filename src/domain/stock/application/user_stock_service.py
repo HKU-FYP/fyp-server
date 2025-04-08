@@ -74,12 +74,3 @@ class UserStockService:
 
         return res
 
-    # TODO 지우기
-    def get_user_stock_ids(self, session: Session, user_id: int): 
-        user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
-        user_stock_ids = [user_stock.id for user_stock in user_stocks]
-        if user_stock_ids:
-            return GetUserStockIdResponse(userStockId=user_stock_ids[0])
-        else:
-            return GetUserStockIdResponse(userStockId=None)
-
