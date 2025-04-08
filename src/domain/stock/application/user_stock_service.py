@@ -26,44 +26,45 @@ class UserStockService:
         self.stock_info_repository = stock_info_repository
         self.keyword_generator = keyword_generator
 
-    def save_user_stock(self, session: Session, user_id: int, stock_info_id: int) -> SaveUserStockResponseDto:
+    def save_user_stock(self, session: Session, user_id: int, stock_info_ids: list[int]) -> SaveUserStockResponseDto:
         # Check whether the user already input a stock with the same stock_info_id
         user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
-        if user_stocks:
-            raise BaseCustomException(400, "User already has the stock")
+        if any(user_stock.stock_info_id == stock_info_id for user_stock in user_stocks):
+            raise BaseCustomException(400, f"User already has the stock with stock_info_id: {stock_info_id}")
 
-        user_stock = UserStock(user_id=user_id, stock_info_id=stock_info_id)
-        self.user_stock_repository.save(session, user_stock)
+        saved_user_stocks = []
+        for stock_info_id in stock_info_ids:
+            user_stock = UserStock(user_id=user_id, stock_info_id=stock_info_id)
+            self.user_stock_repository.save(session, user_stock)
+            saved_user_stocks.append(user_stock)
 
         # Add to milvus
-        # list[str] for vector
-        stock_info = self.stock_info_repository.find_by_id(session, user_stock.stock_info_id)
-        example_keywords = self.keyword_generator.generate_keywords(stock_info.name).keywords
-        # keyword = f"News relevant to {stock_info.name} stock price movements"
-        print(f"Stock Name: {stock_info.name}")
-        print("Example Keywords:", example_keywords)
-        example_keywords.append(stock_info.name)
+        for user_stock in saved_user_stocks:
+            stock_info = self.stock_info_repository.find_by_id(session, user_stock.stock_info_id)
+            example_keywords = self.keyword_generator.generate_keywords(stock_info.name).keywords
+            print(f"Stock Name: {stock_info.name}")
+            print("Example Keywords:", example_keywords)
+            example_keywords.append(stock_info.name)
 
-        for example_keyword in example_keywords:
-            vectors = sentence_transformer.encode_documents([example_keyword])  # convert to embedding
+            for example_keyword in example_keywords:
+                vectors = sentence_transformer.encode_documents([example_keyword])  # convert to embedding
 
-            data = [
-                {
-                    "vector": vectors[0],
-                    "stock_info_id": stock_info.id,
-                    "ticker": stock_info.ticker,
-                    "name": stock_info.name,
-                    "keyword": example_keyword,
-                    "user_id": user_id,
-                    "user_stock_id": user_stock.id,
-                }
-            ]
+                data = [
+                    {
+                        "vector": vectors[0],
+                        "stock_info_id": stock_info.id,
+                        "ticker": stock_info.ticker,
+                        "name": stock_info.name,
+                        "keyword": example_keyword,
+                        "user_id": user_id,
+                        "user_stock_id": user_stock.id,
+                    }
+                ]
 
-            milvus_client.insert(collection_name="dummy_demo1", data=data)
+                milvus_client.insert(collection_name="dummy_demo1", data=data)
+            # res = milvus_client.query(collection_name="dummy_demo1", limit=5)
 
-        # res = milvus_client.query(collection_name="dummy_demo1", limit=5)
-
-        return SaveUserStockResponseDto(user_stock_id=user_stock.id)
+        return SaveUserStockResponseDto(user_stock_id=[user_stock.id for user_stock in saved_user_stocks])
 
     def get_user_stocks_by_user_id(self, session: Session, user_id: int) -> list[UserStockInfoDto]:
         user_stocks = self.user_stock_repository.find_all_by_user_id(session, user_id)
