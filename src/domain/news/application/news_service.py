@@ -59,7 +59,8 @@ class NewsService:
                 link=news.link,
                 publisher=news.publisher,
                 content=news.content,
-                sentiment=news.sentiment
+                sentiment=news.sentiment,
+                one_sentence_summary=news.one_sentence_summary
             )
             for news in news_list
         ]

@@ -11,3 +11,4 @@ class GetAllNewsByUserStockIdResponseDto(BaseModel):
     publisher: str = Field(...)
     content: str = Field(...)
     sentiment: str = Field(...)
+    one_sentence_summary: str = Field(...)
