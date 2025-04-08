@@ -1,4 +1,5 @@
-from sqlalchemy import BigInteger, ForeignKey, Integer, String, DateTime, Text
+from sqlalchemy import BigInteger, ForeignKey, Integer, String, DateTime, Text, \
+    Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
@@ -10,6 +11,8 @@ class News(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False, autoincrement=True)
     user_stock_id: Mapped[int] = mapped_column(Integer, ForeignKey("user_stock.id"), nullable=False)
+
+    matched_keyword: Mapped[str] = mapped_column(String(500), nullable=False)
 
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     author: Mapped[str] = mapped_column(String(500), nullable=True)
@@ -23,6 +26,7 @@ class News(Base):
     summary: Mapped[str] = mapped_column(Text, nullable=True)
     one_sentence_summary: Mapped[str] = mapped_column(Text, nullable=True)
     sentiment: Mapped[str] = mapped_column(Text, nullable=True)
+    sentiment_score: Mapped[float] = mapped_column(Float, nullable=True)
     sentiment_analysis: Mapped[str] = mapped_column(Text, nullable=True)
     stock_impact_analysis_easy: Mapped[str] = mapped_column(Text, nullable=True)
     stock_impact_analysis_intermediate: Mapped[str] = mapped_column(Text, nullable=True)

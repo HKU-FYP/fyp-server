@@ -9,6 +9,9 @@ The sentiment analysis includes the following items.
    - Neutral means that it's not reasonable or there's no significant indicator of the stock price from the news article.
 2) Insightful, factual, reasonable, logical, detailed analysis & rationale & proofs & evidence of your claim from item (1).
    Do not merely give meaningless, verbose, no-depth, abstract reasons. Give DEFINITIVE PROOFS OR EVIDENCE OR RATIONALE to your claim in a structured manner.
+3) Also, provider a "SENTIMENT SCORE" ranging from [-5 ~ 5] (inclusive) to indicate how positive/negative the given news is.
+   - 5 means Strong positive, and -5 means Strong Negative, and 0 means Neutral.
+   - Give it as a floating-point number.
 
 Make sure that your sentiment analysis output is CONCISE AND INSIGHTFUL. It should not be verbose and long. Must be around 3~4 sentences depending on the situation.
 
@@ -20,6 +23,7 @@ YOU MUST RETURN ONLY JSON. DO NOT INCLUDE ANYTHING ELSE IN YOUR RESPONSE.
 You must return response in the following "JSON" format (only JSON)
 {
     "sentiment": "xxx", // item (1) - either Strong_Negative, Negative, Neutral, Positive, Strong_Positive
+    "sentiment_score": xx,
     "analysis": "..." // item (2)
 }
 

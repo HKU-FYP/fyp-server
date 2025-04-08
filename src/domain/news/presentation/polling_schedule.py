@@ -18,6 +18,7 @@ from src.domain.di_container import news_repository, sentiment_analyzer, \
 from datetime import datetime
 from src.shared.database.session import get_session
 from src.domain.di_container import summary_generator_llm
+from src.shared.discord.discord_client import discord_client
 
 client = MilvusClient("milvus_demo.db")
 sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2", device="cpu")
@@ -58,7 +59,6 @@ def start_polling(threshold=0.4):
         },
     )
     results = results[0]
-    # print(results)
 
     # 만약 threshold 넘는 result가 1개라도 있으면 Summary Generation 해야됨.
     is_matched_result = any([result["distance"] >= threshold for result in results])
@@ -101,6 +101,7 @@ def start_polling(threshold=0.4):
             continue
 
         entity = result["entity"]
+        print("Matched Keyword: ", entity["keyword"])
         datetime_obj = datetime.strptime(news_data["published_date"], "%Y-%m-%d %H:%M:%S")
 
         # 3. Sentiment Analysis -> stock이 유저마다 다를 수 있음.
@@ -117,6 +118,7 @@ def start_polling(threshold=0.4):
             # TODO: DUMMY FIX
             sentiment_analysis_result = SentimentAnalysisResultDto(
                 sentiment="Positive",
+                sentiment_score=2.23,
                 analysis="Dummy Analysis Placeholder to save tokens"
             )
             # sentiment_analysis_result = sentiment_analyzer.analyze_sentiment(
@@ -142,6 +144,7 @@ def start_polling(threshold=0.4):
 
         news = News(
             user_stock_id=entity["user_stock_id"],
+            matched_keyword=entity['keyword'],
             title=news_data["title"],
             author=news_data["author"],
             published_date=datetime_obj,
@@ -151,11 +154,14 @@ def start_polling(threshold=0.4):
             summary=summary_dto.summary,
             one_sentence_summary=summary_dto.one_sentence_summary,
             sentiment=sentiment_analysis_result.sentiment,
+            sentiment_score=sentiment_analysis_result.sentiment_score,
             sentiment_analysis=sentiment_analysis_result.analysis,
             stock_impact_analysis_easy=stock_impact_analysis_result.easy,
             stock_impact_analysis_intermediate=stock_impact_analysis_result.intermediate,
             stock_impact_analysis_expert=stock_impact_analysis_result.expert,
         )
+
+        discord_client.report_news(stock_name, news.title, summary_dto.summary, datetime_obj.strftime("%Y-%m-%d %H:%M:%S"), news.sentiment)
 
         news_repository.save(session, news)
 
