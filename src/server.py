@@ -33,7 +33,7 @@ Base.metadata.create_all(bind=engine)
 def start_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(start_polling, "interval", seconds=15)
-    scheduler.start()
+    # scheduler.start() #
 
 
 def init_exception_handlers(app: FastAPI) -> None:
@@ -41,7 +41,7 @@ def init_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     def handle_root_exception(request: Request, exc: Exception) -> JSONResponse:
-        return JSONResponse(
+        return JSONResponse(    
             status_code=500,
             content={"detail": str(exc)},
         )
@@ -168,7 +168,7 @@ def create_app() -> FastAPI:
 
     init_exception_handlers(app)
     init_routers(app)
-    init_milvus()
+    init_milvus() # TODO: delete
 
     return app
 

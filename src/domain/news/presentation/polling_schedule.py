@@ -24,7 +24,7 @@ client = MilvusClient("milvus_demo.db")
 sentence_transformer = model.dense.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2", device="cpu")
 
 idx = 0
-total_len = 8
+total_len = 6
 
 with open("news_data.json") as f:
     news_data_list = json.load(f)
@@ -79,15 +79,15 @@ def start_polling(threshold=0.4):
     if is_matched_result:
         # 1. Summary 생성
         # TODO: DUMMY FIX
-        # summary_dto = summary_generator_llm.generate_summary(content=news_data['summary'])
-        summary = "This is dummy summary to not waste tokens"
-        summary_dto = SummaryGenerationResponseDto("summary", "one-sentence-summary")
+        summary_dto = summary_generator_llm.generate_summary(content=news_data['summary'])
+        # summary = "This is dummy summary to not waste tokens"
+        # summary_dto = SummaryGenerationResponseDto("summary", "one-sentence-summary")
 
         # 2. Key metrics
-        key_metrics = ["abc", "edf", "zyx"]
+        # key_metrics = ["abc", "edf", "zyx"]
         # TODO: DUMMY FIX
-        # key_metrics = financial_metric_analyzer.analyze_metrics(
-        #     news_data['summary']).metrics
+        key_metrics = financial_metric_analyzer.analyze_metrics(
+            news_data['summary']).metrics
         print("Key Metrics: ", key_metrics)
 
     sentiment_analysis_cache: dict[str, SentimentAnalysisResultDto] = {}
@@ -116,15 +116,15 @@ def start_polling(threshold=0.4):
             sentiment_analysis_result = sentiment_analysis_cache[stock_name]
         else:
             # TODO: DUMMY FIX
-            sentiment_analysis_result = SentimentAnalysisResultDto(
-                sentiment="Positive",
-                sentiment_score=2.23,
-                analysis="Dummy Analysis Placeholder to save tokens"
-            )
-            # sentiment_analysis_result = sentiment_analyzer.analyze_sentiment(
-            #     NewsArticleDto(news_data['title'], news_data['summary']),
-            #     stock_name
+            # sentiment_analysis_result = SentimentAnalysisResultDto(
+            #     sentiment="Positive",
+            #     sentiment_score=2.23,
+            #     analysis="Dummy Analysis Placeholder to save tokens"
             # )
+            sentiment_analysis_result = sentiment_analyzer.analyze_sentiment(
+                NewsArticleDto(news_data['title'], news_data['summary']),
+                stock_name
+            )
 
         stock_impact_analysis_result = None
 
@@ -132,8 +132,8 @@ def start_polling(threshold=0.4):
             stock_impact_analysis_result = stock_impact_analysis_cache[stock_name]
         else:
             # TODO: DUMMY FIX
-            # stock_impact_analysis_result: StockImpactAnalysisResultDto = stock_impact_analyzer.analyze_stock_impact(stock_name, news_data['summary'])
-            stock_impact_analysis_result = StockImpactAnalysisResultDto(easy="dummy easy", intermediate="dummy intermediate", expert="dummy expert")
+            stock_impact_analysis_result: StockImpactAnalysisResultDto = stock_impact_analyzer.analyze_stock_impact(stock_name, news_data['summary'])
+            # stock_impact_analysis_result = StockImpactAnalysisResultDto(easy="dummy easy", intermediate="dummy intermediate", expert="dummy expert")
 
 
         print(sentiment_analysis_result)
